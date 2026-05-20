@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sawatch Health System — Situation Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0d1b2e;
+    --navy-lt: #152339;
+    --teal:    #0d7377;
+    --teal-lt: #e0f2f2;
+    --red:     #c0392b;
+    --red-lt:  #fdf0ee;
+    --amber:   #d4820a;
+    --amber-lt:#fef8ec;
+    --border:  #c8d4e0;
+    --muted:   #6b7a8d;
+    --text:    #1a2433;
+    --mono:    'IBM Plex Mono', 'Courier New', monospace;
+    --sans:    'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  body {
+    background: #f0f2f5;
+    font-family: var(--sans);
+    color: var(--text);
+    padding: 24px 16px 48px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ── Outer wrapper ── */
+  .doc {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  /* ── Document header ── */
+  .doc-header {
+    background: var(--navy);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .doc-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--teal);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .org-block {
+    flex: 1;
+    padding: 18px 24px;
+  }
+
+  .org-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+  }
+
+  .org-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .classification-block {
+    background: var(--red);
+    padding: 18px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    min-width: 200px;
+  }
+
+  .class-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .class-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .header-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .meta-cell {
+    padding: 10px 24px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+  .meta-cell:last-child { border-right: none; }
+
+  .meta-label {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    font-family: var(--mono);
+  }
+
+  .meta-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    font-family: var(--mono);
+  }
+
+  .meta-value.alert { color: #f5a623; }
+  .meta-value.critical { color: #ff6b6b; }
+
+  .doc-title-bar {
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sitrep-badge {
+    background: var(--teal);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  .doc-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .doc-update {
+    margin-left: auto;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  /* ── Exercise banner ── */
+  .exercise-bar {
+    background: #fff3cd;
+    border-bottom: 1px solid #f0c040;
+    padding: 7px 24px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #7a5800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .exercise-bar::before {
+    content: '⚠';
+    font-size: 13px;
+  }
+
+  /* ── Body ── */
+  .doc-body { padding: 0; }
+
+  /* ── Section ── */
+  .section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section:last-child { border-bottom: none; }
+
+  .section-header {
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-num {
+    background: var(--navy);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--mono);
+    padding: 2px 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-body {
+    padding: 16px 24px;
+  }
+
+  /* ── Two-col layout ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .col {
+    padding: 16px 24px;
+  }
+
+  .col:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  /* ── Status table ── */
+  .status-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .status-table th {
+    background: #f0f4f8;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .status-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #eef1f5;
+    vertical-align: top;
+  }
+
+  .status-table tr:last-child td { border-bottom: none; }
+
+  .status-table .sys { font-weight: 600; color: var(--text); font-family: var(--mono); font-size: 11px; }
+  .status-table .detail { color: var(--muted); font-size: 11px; }
+
+  /* Status pills */
+  .pill {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  .pill-offline  { background: #fde8e6; color: var(--red); }
+  .pill-degraded { background: #fef3e2; color: var(--amber); }
+  .pill-unknown  { background: #f0f2f5; color: #667; }
+  .pill-online   { background: #e6f4ec; color: #1a7a3a; }
+
+  /* ── Timeline ── */
+  .timeline { list-style: none; position: relative; padding-left: 0; }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 52px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .tl-item {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .tl-item:last-child { margin-bottom: 0; }
+
+  .tl-time {
+    width: 52px;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    color: var(--muted);
+    padding-top: 2px;
+    text-align: right;
+    padding-right: 14px;
+    position: relative;
+  }
+
+  .tl-time::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  .tl-time.critical::after { background: var(--red); box-shadow: 0 0 0 1px var(--red); }
+  .tl-time.warn::after     { background: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+  .tl-time.info::after     { background: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
+  .tl-time.now::after      { background: var(--navy); box-shadow: 0 0 0 1px var(--navy); }
+
+  .tl-content { flex: 1; padding-left: 14px; }
+
+  .tl-event {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .tl-detail {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ── Fact boxes ── */
+  .fact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .fact-box {
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+  }
+
+  .fact-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+    font-family: var(--mono);
+  }
+
+  .fact-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .fact-value.critical { color: var(--red); }
+  .fact-value.warn     { color: var(--amber); }
+
+  .fact-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── Decision items ── */
+  .decision-list { list-style: none; }
+
+  .decision-item {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #eef1f5;
+    align-items: flex-start;
+  }
+
+  .decision-item:last-child { border-bottom: none; }
+
+  .decision-num {
+    background: var(--navy);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--mono);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .decision-text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .decision-owner {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 3px;
+    background: #f0f4f8;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Unconfirmed box ── */
+  .unconfirmed-block {
+    background: var(--amber-lt);
+    border: 1px solid #f0c040;
+    border-left: 3px solid var(--amber);
+    padding: 12px 14px;
+    margin-top: 0;
+  }
+
+  .ub-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .ub-list { list-style: none; }
+
+  .ub-item {
+    font-size: 12px;
+    color: #5a3e00;
+    padding: 3px 0;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .ub-item::before {
+    content: '?';
+    font-weight: 700;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── Critical block ── */
+  .critical-block {
+    background: var(--red-lt);
+    border: 1px solid #e8b4ae;
+    border-left: 3px solid var(--red);
+    padding: 12px 14px;
+  }
+
+  .cb-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--red);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .cb-text {
+    font-size: 12px;
+    color: #5a1a14;
+    line-height: 1.5;
+  }
+
+  /* ── From / To block ── */
+  .memo-line {
+    display: flex;
+    gap: 6px;
+    font-size: 12px;
+    margin-bottom: 5px;
+    align-items: baseline;
+  }
+
+  .memo-key {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    width: 44px;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+
+  .memo-val {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ── Footer ── */
+  .doc-footer {
+    background: var(--navy);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    font-family: var(--mono);
+  }
+
+  .footer-right {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    font-family: var(--mono);
+  }
+
+  .footer-class {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff; padding: 0; font-size: 12px; }
+    .doc { box-shadow: none; border: none; max-width: 100%; }
+    .exercise-bar { background: #ffe; border-color: #cc0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ── Header ── -->
+  <div class="doc-header">
+    <div class="header-top">
+      <div class="org-block">
+        <div class="org-name">Sawatch Health System</div>
+        <div class="org-sub">Information Security · Incident Response</div>
+      </div>
+      <div class="classification-block">
+        <div class="class-label">Classification</div>
+        <div class="class-value">Confidential</div>
+      </div>
+    </div>
+
+    <div class="header-meta">
+      <div class="meta-cell">
+        <div class="meta-label">Document type</div>
+        <div class="meta-value">SITREP-001</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">As of</div>
+        <div class="meta-value alert">TUE 07:46</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Incident status</div>
+        <div class="meta-value critical">ACTIVE</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Severity</div>
+        <div class="meta-value critical">P1 — CRITICAL</div>
+      </div>
+    </div>
+
+    <div class="doc-title-bar">
+      <div class="sitrep-badge">Situation Report</div>
+      <div class="doc-title">Cybersecurity Incident — Initial Executive Briefing</div>
+      <div class="doc-update">Updated 07:46 · v1.0</div>
+    </div>
+  </div>
+
+  <!-- ── Exercise banner ── -->
+  <div class="exercise-bar">
+    EXERCISE SCENARIO — FICTIONAL — NOT A REAL EVENT · RMISC 2026
+  </div>
+
+  <!-- ── Section 1: Distribution ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">Distribution &amp; Provenance</div>
+    </div>
+    <div class="section-body">
+      <div class="memo-line">
+        <div class="memo-key">From</div>
+        <div class="memo-val">Alex Reyes, CISO — Sawatch Health System</div>
+      </div>
+      <div class="memo-line">
+        <div class="memo-key">To</div>
+        <div class="memo-val">CEO, General Counsel, CCO, VP Operations, CFO — Executive Leadership Team</div>
+      </div>
+      <div class="memo-line">
+        <div class="memo-key">CC</div>
+        <div class="memo-val">SecOps Lead · IR Vendor Engagement Lead</div>
+      </div>
+      <div class="memo-line">
+        <div class="memo-key">Sent</div>
+        <div class="memo-val">Tuesday 07:47 · Via secure email (out-of-band) · Do not forward on standard email</div>
+      </div>
+      <div class="memo-line">
+        <div class="memo-key">Re</div>
+        <div class="memo-val">Cybersecurity incident — multi-system disruption — executive action required by 09:00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 2: Executive Summary ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">Executive Summary</div>
+    </div>
+    <div class="section-body">
+      <p style="font-size:13px; line-height:1.6; color:var(--text); margin-bottom:12px;">
+        Sawatch Health System is experiencing an active cybersecurity incident. What IT initially characterised as a storage array failure on Sunday evening has been re-assessed overnight as a coordinated attack across multiple interconnected systems. The full scope is not yet confirmed. Clinical systems at the Eastern Campus are offline. Our IR vendor has been engaged since 04:30 Tuesday.
+      </p>
+      <div class="critical-block">
+        <div class="cb-label">Immediate concern</div>
+        <div class="cb-text">Eastern Campus clinical staff begin their 08:30 shift in less than 45 minutes with no access to the EHR, patient scheduling, or billing systems. Manual downtime procedures have not been tested at scale. A containment vs. continuity decision is required before that shift begins.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 3 + 4: Two columns ── -->
+  <div class="section">
+    <div class="two-col">
+
+      <!-- Timeline -->
+      <div class="col">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-family:var(--mono); margin-bottom:14px;">03 — Timeline of Events</div>
+        <ul class="timeline">
+          <li class="tl-item">
+            <div class="tl-time warn">SUN<br>~18:00</div>
+            <div class="tl-content">
+              <div class="tl-event">First disruption reported</div>
+              <div class="tl-detail">Administrative system intermittent failures. IT attributed to storage array issue.</div>
+            </div>
+          </li>
+          <li class="tl-item">
+            <div class="tl-time warn">MON<br>various</div>
+            <div class="tl-content">
+              <div class="tl-event">Disruptions continue</div>
+              <div class="tl-detail">IT working storage array restoration. No escalation beyond IT.</div>
+            </div>
+          </li>
+          <li class="tl-item">
+            <div class="tl-time critical">TUE<br>~01:00</div>
+            <div class="tl-content">
+              <div class="tl-event">Eastern Campus EHR degraded</div>
+              <div class="tl-detail">Clinical staff report degraded access to electronic health records overnight.</div>
+            </div>
+          </li>
+          <li class="tl-item">
+            <div class="tl-time critical">TUE<br>03:00</div>
+            <div class="tl-content">
+              <div class="tl-event">Billing &amp; scheduling offline</div>
+              <div class="tl-detail">Both systems go offline. Patient scheduling backup system unresponsive.</div>
+            </div>
+          </li>
+          <li class="tl-item">
+            <div class="tl-time critical">TUE<br>04:15</div>
+            <div class="tl-content">
+              <div class="tl-event">Escalated to CISO</div>
+              <div class="tl-detail">On-call IT manager escalates. CISO engaged immediately.</div>
+            </div>
+          </li>
+          <li class="tl-item">
+            <div class="tl-time info">TUE<br>04:30</div>
+            <div class="tl-content">
+              <div class="tl-event">IR vendor engaged</div>
+              <div class="tl-detail">External IR vendor on call. Initial assessment underway.</div>
+            </div>
+          </li>
+          <li class="tl-item">
+            <div class="tl-time now">TUE<br>07:46</div>
+            <div class="tl-content">
+              <div class="tl-event">This report issued</div>
+              <div class="tl-detail">Executive leadership team briefed. 09:00 call convened.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- System status -->
+      <div class="col">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-family:var(--mono); margin-bottom:14px;">04 — System Status as of 07:46</div>
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>Status</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="sys">EHR</div><div class="detail">Eastern Campus</div></td>
+              <td><span class="pill pill-offline">Offline</span></td>
+              <td><div class="detail">Clinical documentation, orders, medications unavailable</div></td>
+            </tr>
+            <tr>
+              <td><div class="sys">Billing</div><div class="detail">All campuses</div></td>
+              <td><span class="pill pill-offline">Offline</span></td>
+              <td><div class="detail">Revenue cycle halted. Claims queued.</div></td>
+            </tr>
+            <tr>
+              <td><div class="sys">Scheduling</div><div class="detail">All campuses</div></td>
+              <td><span class="pill pill-offline">Offline</span></td>
+              <td><div class="detail">Patient appointments inaccessible. Manual workarounds only.</div></td>
+            </tr>
+            <tr>
+              <td><div class="sys">Admin systems</div><div class="detail">Various</div></td>
+              <td><span class="pill pill-degraded">Degraded</span></td>
+              <td><div class="detail">Intermittent. Some file access unavailable.</div></td>
+            </tr>
+            <tr>
+              <td><div class="sys">Backup env.</div><div class="detail">Primary DC</div></td>
+              <td><span class="pill pill-unknown">Unverified</span></td>
+              <td><div class="detail">Integrity not confirmed. Do not restore without IR sign-off.</div></td>
+            </tr>
+            <tr>
+              <td><div class="sys">Email / comms</div><div class="detail">Cloud-hosted</div></td>
+              <td><span class="pill pill-online">Available</span></td>
+              <td><div class="detail">Cloud tenant unaffected. Use with caution — may be monitored.</div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Section 5: What we know / don't know ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">Current Assessment</div>
+    </div>
+    <div class="two-col">
+      <div class="col">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); font-family:var(--mono); margin-bottom:10px;">Confirmed</div>
+        <div class="fact-grid">
+          <div class="fact-box">
+            <div class="fact-label">Incident type</div>
+            <div class="fact-value">Cyber Attack</div>
+            <div class="fact-sub">Not infrastructure failure</div>
+          </div>
+          <div class="fact-box">
+            <div class="fact-label">Systems affected</div>
+            <div class="fact-value critical">3+</div>
+            <div class="fact-sub">EHR, billing, scheduling confirmed</div>
+          </div>
+          <div class="fact-box">
+            <div class="fact-label">Dwell indicator</div>
+            <div class="fact-value warn">36 hrs+</div>
+            <div class="fact-sub">Disruptions began Sunday</div>
+          </div>
+          <div class="fact-box">
+            <div class="fact-label">IR vendor</div>
+            <div class="fact-value">Engaged</div>
+            <div class="fact-sub">On call since 04:30</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); font-family:var(--mono); margin-bottom:10px;">Not yet confirmed</div>
+        <div class="unconfirmed-block">
+          <div class="ub-label">Unknown at time of this report</div>
+          <ul class="ub-list">
+            <li class="ub-item">Initial attack vector</li>
+            <li class="ub-item">Whether data has been exfiltrated</li>
+            <li class="ub-item">Full scope of affected systems</li>
+            <li class="ub-item">Whether attacker still has active access</li>
+            <li class="ub-item">Whether backups are clean and recoverable</li>
+            <li class="ub-item">HIPAA / state notification obligations — clock status unknown</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div style="padding: 12px 24px 16px; border-top: 1px solid var(--border);">
+      <p style="font-size:12px; color:var(--muted); line-height:1.6; font-style:italic;">
+        This report reflects the situation as understood at 07:46. The picture is incomplete and will change. The IR vendor assessment is ongoing. A full executive call is scheduled for 09:00 — please come prepared to act on the information available, not to wait for certainty that may not arrive.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="doc-footer">
+    <div class="footer-left">SITREP-001 · Sawatch Health System · Issued 07:47 Tuesday</div>
+    <div class="footer-class">CONFIDENTIAL — EXEC ONLY</div>
+    <div class="footer-right">v1.0 · Do not forward</div>
+  </div>
+
+</div>
+
+</body>
+</html>

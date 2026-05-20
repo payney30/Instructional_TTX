@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>System Alert — Sawatch Health</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0d1b2e;
+    --navy-lt: #152339;
+    --teal:    #0d7377;
+    --red:     #c0392b;
+    --red-lt:  #fdf0ee;
+    --amber:   #d4820a;
+    --amber-lt:#fef8ec;
+    --green:   #1a7a3a;
+    --green-lt:#e6f4ec;
+    --border:  #c8d4e0;
+    --muted:   #6b7a8d;
+    --text:    #1a2433;
+    --mono:    'IBM Plex Mono', 'Courier New', monospace;
+    --sans:    'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  body {
+    background: #0a0f1a;
+    font-family: var(--mono);
+    color: #c8d8e8;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── Exercise banner ── */
+  .ex-bar {
+    background: #2a1e00;
+    border-bottom: 1px solid #f0c040;
+    padding: 7px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #f0c040;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sans);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Dashboard header ── */
+  .dash-header {
+    background: var(--navy);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 0;
+    position: relative;
+  }
+
+  .dash-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--teal);
+  }
+
+  .dash-header-inner {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dash-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.04em;
+    font-family: var(--sans);
+  }
+
+  .dash-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .dash-time {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-align: right;
+  }
+
+  .dash-time-val {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* ── Alert banner ── */
+  .alert-banner {
+    background: #2a0808;
+    border-bottom: 2px solid var(--red);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: alertPulse 2s infinite;
+  }
+
+  @keyframes alertPulse {
+    0%, 100% { background: #2a0808; }
+    50%       { background: #350a0a; }
+  }
+
+  .alert-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+    animation: dotPulse 1s infinite;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  .alert-text {
+    font-size: 13px;
+    color: #ff8080;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-family: var(--sans);
+  }
+
+  .alert-count {
+    margin-left: auto;
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── System grid ── */
+  .sys-grid {
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sys-section-label {
+    font-size: 9px;
+    color: rgba(200,216,232,0.4);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 4px 0 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 4px;
+  }
+
+  .sys-row {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-left: 3px solid transparent;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  }
+
+  .sys-row.status-offline {
+    border-left-color: var(--red);
+    background: #130a0a;
+  }
+
+  .sys-row.status-degraded {
+    border-left-color: var(--amber);
+    background: #13100a;
+  }
+
+  .sys-row.status-ok {
+    border-left-color: var(--green);
+  }
+
+  .sys-row.status-unknown {
+    border-left-color: #445;
+  }
+
+  /* NEW — flashing row for the inject items */
+  .sys-row.status-offline.new-alert {
+    animation: rowFlash 1.5s infinite;
+  }
+
+  @keyframes rowFlash {
+    0%, 100% { background: #130a0a; }
+    50%       { background: #200e0e; }
+  }
+
+  .sys-info { flex: 1; min-width: 0; }
+
+  .sys-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e0eaf5;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sys-detail {
+    font-size: 10px;
+    color: rgba(200,216,232,0.5);
+    letter-spacing: 0.04em;
+  }
+
+  .sys-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .pill {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  .pill-offline  { background: #3a1010; color: #ff6b6b; border: 1px solid #5a2020; }
+  .pill-degraded { background: #2e1a00; color: #f5a623; border: 1px solid #4a2e00; }
+  .pill-ok       { background: #0a2010; color: #4ade80; border: 1px solid #1a4a28; }
+  .pill-unknown  { background: #1a1f2a; color: #6b7a8d; border: 1px solid #2a3040; }
+
+  .sys-age {
+    font-size: 9px;
+    color: rgba(200,216,232,0.3);
+  }
+
+  /* NEW indicator badge */
+  .new-badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: var(--red);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── Event log ── */
+  .event-log {
+    margin: 0 12px 14px;
+    background: #080d14;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 2px;
+  }
+
+  .log-header {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 9px;
+    color: rgba(200,216,232,0.4);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .log-entry {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-time {
+    color: rgba(200,216,232,0.35);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 10px;
+  }
+
+  .log-msg { color: #a0b4c8; line-height: 1.4; }
+  .log-msg.error   { color: #ff8080; }
+  .log-msg.warn    { color: #f5c060; }
+  .log-msg.new-msg { color: #ff6060; font-weight: 600; }
+
+  /* ── Context note ── */
+  .context-note {
+    margin: 0 12px 20px;
+    background: rgba(13,27,46,0.8);
+    border: 1px solid rgba(13,115,119,0.4);
+    border-left: 3px solid var(--teal);
+    padding: 10px 12px;
+    font-family: var(--sans);
+  }
+
+  .cn-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+
+  .cn-text {
+    font-size: 12px;
+    color: #a0b8c8;
+    line-height: 1.5;
+  }
+
+  /* ── Footer ── */
+  .dash-footer {
+    background: var(--navy);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .footer-l { font-size: 9px; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; }
+  .footer-r { font-size: 9px; color: var(--red); font-weight: 700; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+
+<div class="ex-bar">⚠ EXERCISE SCENARIO — FICTIONAL — NOT A REAL EVENT</div>
+
+<!-- Dashboard header -->
+<div class="dash-header">
+  <div class="dash-header-inner">
+    <div>
+      <div class="dash-title">Sawatch Health — Infrastructure Monitor</div>
+      <div class="dash-sub">Signal 2 of 4 · Systems status · 07:44</div>
+    </div>
+    <div class="dash-time">
+      <div class="dash-sub">Updated</div>
+      <div class="dash-time-val">07:44</div>
+    </div>
+  </div>
+</div>
+
+<!-- Alert banner -->
+<div class="alert-banner">
+  <div class="alert-dot"></div>
+  <div class="alert-text">Critical failures detected — immediate attention required</div>
+  <div class="alert-count">4 CRITICAL</div>
+</div>
+
+<!-- System grid -->
+<div class="sys-grid">
+
+  <div class="sys-section-label">Clinical Systems</div>
+
+  <div class="sys-row status-offline new-alert">
+    <div class="new-badge">NEW</div>
+    <div class="sys-info">
+      <div class="sys-name">EHR — Eastern Campus</div>
+      <div class="sys-detail">Primary DC · All clinical functions</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-offline">Offline</span>
+      <span class="sys-age">since 07:31</span>
+    </div>
+  </div>
+
+  <div class="sys-row status-ok">
+    <div class="sys-info">
+      <div class="sys-name">EHR — Central Campus</div>
+      <div class="sys-detail">Primary DC · Clinical functions</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-ok">Online</span>
+      <span class="sys-age">99.2% uptime</span>
+    </div>
+  </div>
+
+  <div class="sys-section-label">Administrative Systems</div>
+
+  <div class="sys-row status-offline">
+    <div class="sys-info">
+      <div class="sys-name">Billing Platform</div>
+      <div class="sys-detail">All campuses · Revenue cycle</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-offline">Offline</span>
+      <span class="sys-age">since 03:01</span>
+    </div>
+  </div>
+
+  <div class="sys-row status-offline">
+    <div class="sys-info">
+      <div class="sys-name">Patient Scheduling</div>
+      <div class="sys-detail">All campuses · Appointment management</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-offline">Offline</span>
+      <span class="sys-age">since 03:04</span>
+    </div>
+  </div>
+
+  <div class="sys-row status-degraded">
+    <div class="sys-info">
+      <div class="sys-name">Admin File Services</div>
+      <div class="sys-detail">Shared drives · Various depts</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-degraded">Degraded</span>
+      <span class="sys-age">since 02:48</span>
+    </div>
+  </div>
+
+  <div class="sys-section-label">Recovery &amp; Backup</div>
+
+  <div class="sys-row status-offline new-alert">
+    <div class="new-badge">NEW</div>
+    <div class="sys-info">
+      <div class="sys-name">Backup Environment</div>
+      <div class="sys-detail">Primary DC · All backup jobs</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-offline">Unresponsive</span>
+      <span class="sys-age">since 07:38</span>
+    </div>
+  </div>
+
+  <div class="sys-row status-unknown">
+    <div class="sys-info">
+      <div class="sys-name">Scheduling Backup System</div>
+      <div class="sys-detail">Failover · Patient scheduling</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-unknown">No response</span>
+      <span class="sys-age">since 03:12</span>
+    </div>
+  </div>
+
+  <div class="sys-section-label">Communications</div>
+
+  <div class="sys-row status-ok">
+    <div class="sys-info">
+      <div class="sys-name">Email — Cloud Tenant</div>
+      <div class="sys-detail">Microsoft 365 · All staff</div>
+    </div>
+    <div class="sys-status">
+      <span class="pill pill-ok">Available</span>
+      <span class="sys-age">100% uptime</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Event log -->
+<div class="event-log">
+  <div class="log-header">
+    <span>Recent events</span>
+    <span>Auto-refresh: 30s</span>
+  </div>
+  <div class="log-entry">
+    <span class="log-time">07:44</span>
+    <span class="log-msg new-msg">CRITICAL: Backup environment health check failed — no response from backup server. Do not attempt restore operations.</span>
+  </div>
+  <div class="log-entry">
+    <span class="log-time">07:38</span>
+    <span class="log-msg error">CRITICAL: EHR Eastern Campus unreachable — connection timeout on all nodes</span>
+  </div>
+  <div class="log-entry">
+    <span class="log-time">07:31</span>
+    <span class="log-msg warn">WARNING: EHR Eastern Campus — intermittent connectivity, degraded response</span>
+  </div>
+  <div class="log-entry">
+    <span class="log-time">03:12</span>
+    <span class="log-msg error">ERROR: Scheduling backup failover — no response from standby system</span>
+  </div>
+  <div class="log-entry">
+    <span class="log-time">03:04</span>
+    <span class="log-msg error">CRITICAL: Patient scheduling offline — all campus instances</span>
+  </div>
+  <div class="log-entry">
+    <span class="log-time">03:01</span>
+    <span class="log-msg error">CRITICAL: Billing platform offline — all campus instances</span>
+  </div>
+</div>
+
+<!-- Context note -->
+<div class="context-note">
+  <div class="cn-label">For all roles</div>
+  <div class="cn-text">This is the live infrastructure monitor as of 07:44. Two new failures have appeared in the last 13 minutes — the EHR at Eastern Campus and the backup environment. The backup system going unresponsive means you cannot confirm whether recovery points are clean or even accessible.</div>
+</div>
+
+<!-- Footer -->
+<div class="dash-footer">
+  <span class="footer-l">SHS-INFRA-MON · Auto-refresh paused during incident</span>
+  <span class="footer-r">4 CRITICAL · 1 DEGRADED</span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Message — Sawatch Health</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #0d1b2e;
+    --teal:   #0d7377;
+    --red:    #c0392b;
+    --amber:  #d4820a;
+    --border: #c8d4e0;
+    --muted:  #6b7a8d;
+    --text:   #1a2433;
+    --mono:   'IBM Plex Mono', 'Courier New', monospace;
+    --sans:   'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+    --bg-phone: #1c1c1e;
+    --bubble-in: #e9e9eb;
+    --bubble-out: #0a84ff;
+  }
+
+  body {
+    background: #f0f2f5;
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px 40px;
+  }
+
+  /* ── Exercise banner ── */
+  .ex-bar {
+    width: 100%;
+    max-width: 420px;
+    background: #fff3cd;
+    border: 1px solid #f0c040;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #7a5800;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sans);
+  }
+
+  /* ── Org header strip ── */
+  .org-strip {
+    width: 100%;
+    max-width: 420px;
+    background: var(--navy);
+    border-radius: 6px 6px 0 0;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .org-strip::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--teal);
+    border-radius: 6px 6px 0 0;
+  }
+
+  .org-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  .org-sub {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .inject-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  /* ── Phone shell ── */
+  .phone {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-phone);
+    border-radius: 0 0 24px 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--bg-phone);
+    padding: 12px 20px 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .status-time {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    font-family: var(--mono);
+  }
+
+  .status-icons {
+    font-size: 12px;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+
+  /* Messages header */
+  .msg-header {
+    background: #1c1c1e;
+    padding: 8px 16px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 0.5px solid #2c2c2e;
+  }
+
+  .back-arrow {
+    color: #0a84ff;
+    font-size: 17px;
+    font-weight: 400;
+  }
+
+  .contact-info { flex: 1; text-align: center; }
+
+  .contact-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3a3a3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 auto 3px;
+  }
+
+  .contact-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .contact-sub {
+    font-size: 10px;
+    color: #8e8e93;
+  }
+
+  /* Messages area */
+  .messages {
+    background: var(--bg-phone);
+    padding: 16px 12px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .date-label {
+    text-align: center;
+    font-size: 11px;
+    color: #8e8e93;
+    margin-bottom: 6px;
+  }
+
+  /* Older messages — greyed out for context */
+  .bubble-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .bubble-row.out { justify-content: flex-end; }
+  .bubble-row.in  { justify-content: flex-start; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 8px 12px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+  }
+
+  .bubble.out {
+    background: #3a3a3c;
+    color: #8e8e93;
+    border-bottom-right-radius: 4px;
+    font-size: 13px;
+  }
+
+  .bubble.in.old {
+    background: #2c2c2e;
+    color: #636366;
+    border-bottom-left-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* NEW — the actual inject message */
+  .bubble.in.new {
+    background: var(--bubble-in);
+    color: #000;
+    border-bottom-left-radius: 4px;
+    font-size: 15px;
+    animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.85) translateY(6px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .bubble-time {
+    font-size: 10px;
+    color: #636366;
+    margin-top: 3px;
+    padding: 0 4px;
+  }
+
+  .bubble-time.right { text-align: right; }
+
+  /* New message indicator */
+  .new-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+  }
+
+  .new-line { flex: 1; height: 0.5px; background: #3a3a3c; }
+
+  .new-label {
+    font-size: 10px;
+    color: #636366;
+    white-space: nowrap;
+  }
+
+  /* Notification dot */
+  .notif-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: 4px;
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  /* Urgency flag */
+  .urgency-bar {
+    background: #2c1010;
+    border-top: 1px solid #5a2020;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .urgency-text {
+    font-size: 12px;
+    color: #ff6b6b;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  /* Input area (fake) */
+  .input-area {
+    background: #1c1c1e;
+    border-top: 0.5px solid #2c2c2e;
+    padding: 10px 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .input-box {
+    flex: 1;
+    background: #2c2c2e;
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 14px;
+    color: #636366;
+  }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3a3a3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #636366;
+    font-size: 14px;
+  }
+
+  /* Context note */
+  .context-note {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 14px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--navy);
+    border-radius: 0 4px 4px 0;
+    padding: 10px 14px;
+  }
+
+  .cn-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+
+  .cn-text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="ex-bar">⚠ EXERCISE SCENARIO — FICTIONAL — NOT A REAL EVENT</div>
+
+<div class="org-strip">
+  <div>
+    <div class="org-name">Sawatch Health System</div>
+    <div class="org-sub">Signal 1 of 4 · 0:40</div>
+  </div>
+  <div class="inject-badge">Inject</div>
+</div>
+
+<div class="phone">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-time">7:42</div>
+    <div class="status-icons">▲ ⬛ 🔋</div>
+  </div>
+
+  <!-- Messages header -->
+  <div class="msg-header">
+    <div class="back-arrow">‹</div>
+    <div class="contact-info">
+      <div class="contact-avatar">DK</div>
+      <div class="contact-name">D. Kowalski</div>
+      <div class="contact-sub">Eastern Campus · IT Operations Manager</div>
+    </div>
+    <div style="width:32px;"></div>
+  </div>
+
+  <!-- Message thread -->
+  <div class="messages">
+
+    <div class="date-label">Tuesday · Earlier</div>
+
+    <div class="bubble-row in">
+      <div>
+        <div class="bubble in old">Still working the storage issue. IT on it overnight.</div>
+        <div class="bubble-time">11:34pm Mon</div>
+      </div>
+    </div>
+
+    <div class="bubble-row out">
+      <div>
+        <div class="bubble out">Keep me posted. Board call tomorrow.</div>
+        <div class="bubble-time right">11:41pm Mon</div>
+      </div>
+    </div>
+
+    <div class="bubble-row in">
+      <div>
+        <div class="bubble in old">Will do. Should have storage back by morning.</div>
+        <div class="bubble-time">11:43pm Mon</div>
+      </div>
+    </div>
+
+    <!-- New message separator -->
+    <div class="new-indicator">
+      <div class="new-line"></div>
+      <div class="new-label"><span class="notif-dot"></span>New · 7:42am</div>
+      <div class="new-line"></div>
+    </div>
+
+    <!-- THE INJECT MESSAGE -->
+    <div class="bubble-row in">
+      <div>
+        <div class="bubble in new">EHR is completely down at Eastern. All clinical staff affected — no patient records, no orders, no meds access. Backup scheduling also unresponsive. Shift starts in 45 mins. Calling you now.</div>
+        <div class="bubble-time">7:42am · Delivered</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Urgency flag -->
+  <div class="urgency-bar">
+    <span class="notif-dot"></span>
+    <span class="urgency-text">Missed call from D. Kowalski · 7:43am</span>
+  </div>
+
+  <!-- Fake input -->
+  <div class="input-area">
+    <div class="input-box">Message</div>
+    <div class="send-btn">↑</div>
+  </div>
+
+</div>
+
+<!-- Context note -->
+<div class="context-note">
+  <div class="cn-label">Your role — CEO</div>
+  <div class="cn-text">This message arrived on your personal phone 90 seconds ago. Your 9am call is in 75 minutes. Kowalski is trying to reach you. You have not yet spoken to the CISO.</div>
+</div>
+
+</body>
+</html>
