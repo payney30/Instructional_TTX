@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vantage IR — Secure Comms</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #0b0f18;
+    --surface:     #111827;
+    --surface2:    #1a2233;
+    --surface3:    #202c40;
+    --border:      rgba(255,255,255,0.07);
+    --border-med:  rgba(255,255,255,0.12);
+    --text:        #c8d8e8;
+    --text-dim:    rgba(200,216,232,0.45);
+    --text-bright: #eef4fa;
+    --teal:        #0d9488;
+    --teal-lt:     #14b8aa;
+    --teal-dim:    rgba(13,148,136,0.15);
+    --red:         #dc2626;
+    --red-dim:     rgba(220,38,38,0.12);
+    --amber:       #d97706;
+    --amber-dim:   rgba(217,119,6,0.12);
+    --mono:        'IBM Plex Mono', 'Courier New', monospace;
+    --sans:        'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    font-family: var(--sans);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Exercise banner ── */
+  .ex-bar {
+    background: #2a1e00;
+    border-bottom: 1px solid #f0c040;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #f0c040;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+  .ex-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #f0c040;
+    animation: blink 1.2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ── App chrome ── */
+  .app-chrome {
+    background: #0e1520;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chrome-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lock-icon {
+    width: 28px; height: 28px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(13,148,136,0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .lock-icon svg { width: 14px; height: 14px; fill: var(--teal-lt); }
+  .chrome-app-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-bright);
+    letter-spacing: 0.02em;
+  }
+  .chrome-app-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    font-family: var(--mono);
+    text-transform: uppercase;
+  }
+  .chrome-right {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .chrome-time {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-bright);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Routing badge ── */
+  .routing-bar {
+    background: rgba(220,38,38,0.08);
+    border-bottom: 1px solid rgba(220,38,38,0.2);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .routing-label {
+    color: #f87171;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .routing-pipe {
+    color: rgba(220,38,38,0.3);
+  }
+  .routing-val {
+    color: rgba(248,113,113,0.7);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Main content ── */
+  .content {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  /* ── Message header card ── */
+  .msg-header {
+    background: var(--surface);
+    border: 1px solid var(--border-med);
+    border-top: 2px solid var(--teal);
+    border-radius: 4px 4px 0 0;
+    padding: 16px;
+    margin-bottom: 0;
+  }
+
+  .msg-type-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal-lt);
+    margin-bottom: 10px;
+  }
+
+  .msg-meta-grid {
+    display: grid;
+    gap: 6px;
+  }
+  .msg-meta-row {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    font-size: 12px;
+  }
+  .meta-key {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    width: 60px;
+    flex-shrink: 0;
+  }
+  .meta-val {
+    color: var(--text-bright);
+    font-weight: 500;
+  }
+  .meta-val.name {
+    font-weight: 600;
+    color: #eef4fa;
+  }
+  .meta-val.timestamp {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .meta-val.channel-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(13,148,136,0.25);
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--teal-lt);
+    letter-spacing: 0.04em;
+  }
+  .channel-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--teal-lt);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Divider between header and body ── */
+  .msg-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0;
+  }
+
+  /* ── Message body ── */
+  .msg-body {
+    background: var(--surface);
+    border: 1px solid var(--border-med);
+    border-top: none;
+    border-radius: 0;
+    padding: 20px 20px 0;
+  }
+
+  .transcript-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .transcript-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .duration-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 8px;
+  }
+
+  /* ── Voicemail player strip (cosmetic) ── */
+  .player-strip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .play-btn {
+    width: 30px; height: 30px;
+    background: var(--teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: default;
+  }
+  .play-btn svg { width: 10px; height: 12px; fill: #fff; margin-left: 2px; }
+  .waveform {
+    flex: 1;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .waveform-bar {
+    flex: 1;
+    background: var(--surface3);
+    border-radius: 1px;
+    min-height: 3px;
+  }
+  .waveform-bar.active { background: var(--teal); }
+  .player-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  /* ── Transcript text ── */
+  .transcript-text {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+    padding-bottom: 20px;
+  }
+  .speaker-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--teal-lt);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .transcript-para {
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  .transcript-para:last-child { margin-bottom: 0; }
+
+  /* Emphasis — key technical detail */
+  .key-detail {
+    color: var(--text-bright);
+    font-weight: 500;
+  }
+  .critical-phrase {
+    color: #fca5a5;
+    font-weight: 500;
+  }
+
+  /* ── Footer action bar ── */
+  .msg-footer {
+    background: var(--surface2);
+    border: 1px solid var(--border-med);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .footer-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+  .status-dot-read {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-lt);
+    flex-shrink: 0;
+  }
+  .reply-disabled {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    opacity: 0.5;
+  }
+
+  /* ── Context note (facilitator-invisible, for participant) ── */
+  .context-note {
+    background: rgba(217,119,6,0.07);
+    border: 1px solid rgba(217,119,6,0.2);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 4px 4px 0;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+  }
+  .context-note-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 6px;
+  }
+  .context-note-text {
+    font-size: 12px;
+    line-height: 1.6;
+    color: rgba(200,216,232,0.65);
+  }
+
+  /* ── Previous messages stub ── */
+  .prev-stub {
+    opacity: 0.35;
+    margin-top: 8px;
+  }
+  .prev-msg-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .prev-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .prev-text {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Exercise banner -->
+<div class="ex-bar">
+  <div class="ex-dot"></div>
+  EXERCISE ONLY &nbsp;·&nbsp; FICTIONAL SCENARIO &nbsp;·&nbsp; NOT A REAL EVENT &nbsp;·&nbsp; RMISC 2026
+</div>
+
+<!-- App chrome -->
+<div class="app-chrome">
+  <div class="chrome-left">
+    <div class="lock-icon">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 7V5.5a3 3 0 0 0-6 0V7H4v7h8V7h-1zm-4-1.5a1 1 0 0 1 2 0V7H7V5.5zM9 11.4V13H7v-1.6a1.5 1.5 0 1 1 2 0z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="chrome-app-name">Vantage IR — Secure Comms</div>
+      <div class="chrome-app-sub">End-to-end encrypted &nbsp;·&nbsp; Incident channel</div>
+    </div>
+  </div>
+  <div class="chrome-right">
+    <div class="chrome-time">07:52</div>
+    <div>TUE 15 APR</div>
+  </div>
+</div>
+
+<!-- Routing bar -->
+<div class="routing-bar">
+  <span class="routing-label">Restricted</span>
+  <span class="routing-pipe">|</span>
+  <span class="routing-val">Routed to: A. Reyes (CISO) &nbsp;·&nbsp; SecOps Lead &nbsp;·&nbsp; IR Engagement Team only</span>
+</div>
+
+<!-- Main content -->
+<div class="content">
+
+  <!-- Message header -->
+  <div class="msg-header">
+    <div class="msg-type-label">Voicemail transcript &nbsp;·&nbsp; Auto-generated</div>
+    <div class="msg-meta-grid">
+      <div class="msg-meta-row">
+        <span class="meta-key">From</span>
+        <span class="meta-val name">Marcus Webb &nbsp;—&nbsp; Incident Lead, Vantage IR</span>
+      </div>
+      <div class="msg-meta-row">
+        <span class="meta-key">To</span>
+        <span class="meta-val">Alex Reyes, CISO &nbsp;·&nbsp; Sawatch Health System</span>
+      </div>
+      <div class="msg-meta-row">
+        <span class="meta-key">Received</span>
+        <span class="meta-val timestamp">07:52:14 &nbsp;·&nbsp; via Vantage SecureVoice &nbsp;·&nbsp; Incident #SHS-0415</span>
+      </div>
+      <div class="msg-meta-row">
+        <span class="meta-key">Channel</span>
+        <div class="meta-val channel-tag">
+          <div class="channel-dot"></div>
+          SHS-ACTIVE-INCIDENT
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="msg-divider"></div>
+
+  <!-- Message body -->
+  <div class="msg-body">
+
+    <div class="transcript-header">
+      <div class="transcript-label">Transcript &nbsp;·&nbsp; confidence 94%</div>
+      <div class="duration-badge">0:47</div>
+    </div>
+
+    <!-- Cosmetic waveform player -->
+    <div class="player-strip">
+      <div class="play-btn">
+        <svg viewBox="0 0 10 12" xmlns="http://www.w3.org/2000/svg"><path d="M0 0l10 6-10 6z"/></svg>
+      </div>
+      <div class="waveform">
+        <!-- bars: varied heights to look like a real waveform -->
+        <div class="waveform-bar active" style="height:40%"></div>
+        <div class="waveform-bar active" style="height:65%"></div>
+        <div class="waveform-bar active" style="height:55%"></div>
+        <div class="waveform-bar active" style="height:80%"></div>
+        <div class="waveform-bar active" style="height:70%"></div>
+        <div class="waveform-bar active" style="height:90%"></div>
+        <div class="waveform-bar active" style="height:60%"></div>
+        <div class="waveform-bar active" style="height:75%"></div>
+        <div class="waveform-bar active" style="height:50%"></div>
+        <div class="waveform-bar active" style="height:85%"></div>
+        <div class="waveform-bar active" style="height:45%"></div>
+        <div class="waveform-bar active" style="height:70%"></div>
+        <div class="waveform-bar" style="height:60%"></div>
+        <div class="waveform-bar" style="height:40%"></div>
+        <div class="waveform-bar" style="height:55%"></div>
+        <div class="waveform-bar" style="height:75%"></div>
+        <div class="waveform-bar" style="height:65%"></div>
+        <div class="waveform-bar" style="height:50%"></div>
+        <div class="waveform-bar" style="height:80%"></div>
+        <div class="waveform-bar" style="height:45%"></div>
+        <div class="waveform-bar" style="height:70%"></div>
+        <div class="waveform-bar" style="height:60%"></div>
+        <div class="waveform-bar" style="height:35%"></div>
+        <div class="waveform-bar" style="height:50%"></div>
+        <div class="waveform-bar" style="height:40%"></div>
+      </div>
+      <div class="player-time">0:12 / 0:47</div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript-text">
+      <div class="speaker-id">Marcus Webb &nbsp;·&nbsp; Vantage IR</div>
+
+      <p class="transcript-para">
+        Alex — Marcus. I know you're in with leadership. I'm keeping this short.
+      </p>
+
+      <p class="transcript-para">
+        <span class="key-detail">We're seeing encrypted files across three business units.</span>
+        This is not a storage failure. It is not isolated to Eastern Campus.
+        We have indicators across billing, scheduling, and at least one shared services directory.
+      </p>
+
+      <p class="transcript-para">
+        <span class="critical-phrase">The backup environment went unresponsive at 07:38.</span>
+        We haven't confirmed whether your most recent recovery points are clean.
+        You may not be able to restore your way out of this — not quickly.
+      </p>
+
+      <p class="transcript-para">
+        I need you to think about <span class="key-detail">containment before your nine o'clock.</span>
+        If you cut network segments now, you limit spread.
+        If you wait for the exec call to get buy-in, you risk losing more ground.
+      </p>
+
+      <p class="transcript-para">
+        That's your call. But make it soon.
+      </p>
+
+      <p class="transcript-para">
+        I'll be on the line. Call me back before you go into that room.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Footer action bar -->
+  <div class="msg-footer">
+    <div class="footer-status">
+      <div class="status-dot-read"></div>
+      Delivered &nbsp;·&nbsp; Read 07:52
+    </div>
+    <div class="reply-disabled">Reply via secure channel only</div>
+  </div>
+
+  <!-- Context note for participant -->
+  <div class="context-note">
+    <div class="context-note-label">For CISO &amp; SecOps — context</div>
+    <div class="context-note-text">
+      Marcus Webb is your IR vendor's incident lead — engaged since 04:30 this morning. This message arrived on the Vantage secure comms platform, separate from standard email.
+      The executive leadership team has not seen this update. You received it. What you do with it — and when — is your call.
+    </div>
+  </div>
+
+  <!-- Ghost of earlier messages — adds realism -->
+  <div class="prev-stub">
+    <div class="msg-meta-row" style="margin-bottom:8px; font-family: var(--mono); font-size:9px; color: var(--text-dim); letter-spacing:0.1em; text-transform:uppercase;">Earlier in this channel</div>
+    <div class="prev-msg-row">
+      <div class="prev-dot"></div>
+      <div class="prev-text">Webb, M. &nbsp;·&nbsp; 06:12 &nbsp;·&nbsp; "Initial triage complete. Recommend escalation to P1. Standing up IR bridge line."</div>
+    </div>
+    <div class="prev-msg-row">
+      <div class="prev-dot"></div>
+      <div class="prev-text">Webb, M. &nbsp;·&nbsp; 04:31 &nbsp;·&nbsp; "Vantage IR engaged. Beginning remote triage. Do not reboot affected systems."</div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+</body>
+</html>
