@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal Inject Card — Print</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0d1b2e;
+    --navy-lt: #152339;
+    --teal:    #0d7377;
+    --red:     #c0392b;
+    --amber:   #d4820a;
+    --border:  #c8d4e0;
+    --muted:   #6b7a8d;
+    --text:    #1a2433;
+    --mono:    'IBM Plex Mono', 'Courier New', monospace;
+    --sans:    'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  body {
+    background: #e8e8e8;
+    font-family: var(--sans);
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .print-note {
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── CARD ── */
+  .card-wrap {
+    width: 148mm;  /* A5 width — fits two per A4 sheet */
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+
+  /* Card front */
+  .card-front {
+    background: #fff;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Header */
+  .card-header {
+    background: var(--navy);
+    padding: 0;
+    position: relative;
+  }
+
+  .card-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--teal);
+  }
+
+  .card-header-inner {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ch-org {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .ch-sub {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .ch-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 7px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  /* Envelope strip */
+  .envelope-strip {
+    background: var(--amber);
+    padding: 5px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .env-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .env-recipient {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.06em;
+  }
+
+  /* Signal tag */
+  .signal-bar {
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sig-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .sig-time {
+    font-size: 9px;
+    color: var(--red);
+    font-weight: 700;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 14px 16px;
+  }
+
+  /* From line */
+  .from-block {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .from-row {
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+    margin-bottom: 3px;
+    align-items: baseline;
+  }
+
+  .from-key {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    width: 36px;
+    flex-shrink: 0;
+  }
+
+  .from-val {
+    font-size: 11px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Message body */
+  .msg-label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .msg-body {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  /* Alert box */
+  .alert-box {
+    background: #fdf0ee;
+    border: 1px solid #e8b4ae;
+    border-left: 3px solid var(--red);
+    padding: 9px 11px;
+    margin-bottom: 12px;
+  }
+
+  .ab-label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--red);
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+
+  .ab-text {
+    font-size: 11px;
+    color: #5a1a14;
+    line-height: 1.5;
+  }
+
+  /* Action prompts */
+  .prompts-label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--navy);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .prompt-item {
+    display: flex;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 5px;
+    align-items: flex-start;
+  }
+
+  .prompt-num {
+    background: var(--navy);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    font-family: var(--mono);
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Card footer */
+  .card-footer {
+    background: var(--navy);
+    padding: 7px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cf-left {
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+  }
+
+  .cf-right {
+    font-size: 8px;
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+  }
+
+  /* Exercise flag */
+  .ex-flag {
+    background: #fff3cd;
+    border: 1px solid #f0c040;
+    border-top: none;
+    padding: 5px 16px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #7a5800;
+    text-align: center;
+    letter-spacing: 0.06em;
+    font-family: var(--sans);
+  }
+
+  /* ── ENVELOPE (fold here) ── */
+  .fold-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 148mm;
+    margin: 8px 0;
+  }
+
+  .fold-dash {
+    flex: 1;
+    border-top: 1px dashed #aaa;
+  }
+
+  .fold-text {
+    font-size: 9px;
+    color: #aaa;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* Envelope back (the sealed side) */
+  .card-back {
+    width: 148mm;
+    background: var(--navy-lt);
+    border: 1px solid var(--navy);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-back::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--teal);
+  }
+
+  .back-org {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .back-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--amber);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    text-align: center;
+  }
+
+  .back-instruction {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .sealed-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  @media print {
+    body { background: #fff; padding: 10mm; }
+    .print-note { display: none; }
+    .card-wrap { box-shadow: none; }
+    .fold-line { margin: 4mm 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-note">PRINT · Cut along fold line · One card per Legal seat · Place sealed-side up before session begins</div>
+
+<!-- ══════════════════════════════
+     CARD FRONT (participant sees this when opened)
+══════════════════════════════ -->
+<div class="card-wrap">
+
+  <div class="card-front">
+
+    <div class="card-header">
+      <div class="card-header-inner">
+        <div>
+          <div class="ch-org">Sawatch Health System</div>
+          <div class="ch-sub">Information Security · Incident Response</div>
+        </div>
+        <!--div class="ch-badge">Inject · Signal 3</div--removed-->
+      </div>
+    </div>
+
+    <div class="envelope-strip">
+      <div class="env-label">To:</div>
+      <div class="env-recipient">General Counsel / Legal</div>
+    </div>
+
+    <div class="signal-bar">
+      <span class="sig-label"> Printed message · Open on facilitator cue</span>
+      <span class="sig-time">⏱ ~0:44</span>
+    </div>
+
+    <div class="card-body">
+
+      <div class="from-block">
+        <div class="from-row">
+          <span class="from-key">From</span>
+          <span class="from-val">M. Torres, Executive Assistant to the CIO</span>
+        </div>
+        <div class="from-row">
+          <span class="from-key">To</span>
+          <span class="from-val">General Counsel - forwarded at CISO request</span>
+        </div>
+        <div class="from-row">
+          <span class="from-key">Sent</span>
+          <span class="from-val">Tuesday 07:43 · Printed and hand-delivered</span>
+        </div>
+      </div>
+
+      <div class="msg-label">Message</div>
+      <div class="msg-body">
+        I was asked to get this to you directly. IT found a text file on one of the shared network drives at approximately 7:35am. The CISO's team has confirmed it appears to be a ransom note. I haven't read the full content. I was told to get it to Legal immediately and not to discuss it further until you've seen it.
+      </div>
+
+      <!--div class="alert-box">
+        <div class="ab-label">Ransom note - confirmed present</div>
+        <div class="ab-text">A threat actor message has been found on a shared network drive. Content references encrypted systems and demands. The CISO's IR vendor is examining it. Full content has not been circulated. You are among the first to know.</div>
+      </div>
+
+      <!--div class="prompts-label">Questions only you can answer right now</div>
+      <div class="prompt-item">
+        <div class="prompt-num">1</div>
+        <span>Does the discovery of a ransom note change your assessment of when the legal notification clock started?</span>
+      </div>
+      <div class="prompt-item">
+        <div class="prompt-num">2</div>
+        <span>Who else in this room should know about this — and in what order?</span>
+      </div>
+      <div class="prompt-item">
+        <div class="prompt-num">3</div>
+        <span>Does this need to go to outside counsel before the nine o'clock call?</span>
+      </div-- removed>
+
+    </div>
+
+    <div class="card-footer">
+      <span class="cf-left">SITREP-001 · Legal channel · 07:43 Tuesday</span>
+      <span class="cf-right">Confidential — do not circulate</span>
+    </div>
+
+  </div>
+
+  <div class="ex-flag">⚠ EXERCISE SCENARIO — FICTIONAL — NOT A REAL EVENT · RMISC 2026</div>
+
+</div>
+
+<!-- Fold / cut line -->
+<div class="fold-line">
+  <div class="fold-dash"></div>
+  <div class="fold-text">✂ FOLD OR CUT — SEAL BEFORE PLACING AT SEAT</div>
+  <div class="fold-dash"></div>
+</div>
+
+<!-- ══════════════════════════════
+     CARD BACK (face-up before opening)
+     Participants see this at their seat
+══════════════════════════════ -->
+<div class="card-back">
+  <div class="back-org">Sawatch Health System</div>
+  <div class="sealed-badge">⬛ Sealed — Do Not Open</div>
+  <div class="back-label">General Counsel · Legal</div>
+  <div class="back-instruction">Open only when instructed by the facilitator</div>
+</div>
+
+<div class="print-note" style="margin-top: 16px;">
+  Printing tip: set margins to minimum · Scale to fit · Print both pages back-to-back if possible, otherwise fold the single sheet so the back faces up
+</div>
+
+</body>
+</html>
