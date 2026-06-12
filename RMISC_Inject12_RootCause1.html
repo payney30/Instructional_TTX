@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian IR — Preliminary Findings Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ir-dark:    #0e1a28;
+    --ir-mid:     #162236;
+    --ir-accent:  #1a5fa8;
+    --ir-accent-lt:#e8f0fb;
+    --navy:       #0d1b2e;
+    --teal:       #0d7377;
+    --red:        #c0392b;
+    --red-lt:     #fdf0ee;
+    --amber:      #d4820a;
+    --amber-lt:   #fef8ec;
+    --green:      #1a7a3a;
+    --green-lt:   #e8f5ed;
+    --border:     #c8d4e0;
+    --border-dk:  #2a3a4e;
+    --muted:      #6b7a8d;
+    --text:       #1a2433;
+    --mono:       'IBM Plex Mono', 'Courier New', monospace;
+    --sans:       'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  body {
+    background: #e8edf2;
+    font-family: var(--sans);
+    color: var(--text);
+    padding: 24px 16px 60px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ── Document wrapper ── */
+  .doc {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  }
+
+  /* ══════════════════════════════════════
+     HEADER
+  ══════════════════════════════════════ */
+  .doc-header {
+    background: var(--ir-dark);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle grid texture */
+  .doc-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+
+  /* Blue top accent — distinguishes from Sawatch teal */
+  .doc-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--ir-accent);
+    z-index: 1;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    position: relative;
+    z-index: 1;
+  }
+
+  .vendor-block {
+    flex: 1;
+    padding: 18px 24px;
+  }
+
+  .vendor-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .vendor-tag {
+    background: var(--ir-accent);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    font-family: var(--mono);
+  }
+
+  .vendor-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.06em;
+  }
+
+  .client-block {
+    padding: 18px 24px;
+    border-left: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    min-width: 220px;
+  }
+
+  .client-label {
+    font-size: 9px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .client-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .client-ref {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    font-family: var(--mono);
+  }
+
+  /* Meta row */
+  .header-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    position: relative;
+    z-index: 1;
+  }
+
+  .meta-cell {
+    padding: 10px 24px;
+    border-right: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .meta-cell:last-child { border-right: none; }
+
+  .meta-label {
+    font-size: 9px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 3px;
+  }
+
+  .meta-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    font-family: var(--mono);
+  }
+
+  .meta-value.prelim { color: #f5a623; }
+  .meta-value.confirmed { color: #6ee7b7; }
+  .meta-value.cleared { color: #6ee7b7; }
+
+  /* Title bar */
+  .doc-title-bar {
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .report-badge {
+    background: var(--ir-accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  .doc-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .doc-version {
+    margin-left: auto;
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  /* ── Exercise banner ── */
+  .exercise-bar {
+    background: #fff3cd;
+    border-bottom: 1px solid #f0c040;
+    padding: 7px 24px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #7a5800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .exercise-bar::before { content: '⚠'; font-size: 13px; }
+
+  /* ══════════════════════════════════════
+     SECTION STRUCTURE
+  ══════════════════════════════════════ */
+  .section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section:last-child { border-bottom: none; }
+
+  .section-header {
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-num {
+    background: var(--ir-dark);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--mono);
+    padding: 2px 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ir-dark);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-status {
+    margin-left: auto;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+  }
+
+  .status-confirmed { background: var(--green-lt); color: var(--green); }
+  .status-prelim    { background: var(--amber-lt); color: var(--amber); }
+  .status-cleared   { background: var(--green-lt); color: var(--green); }
+
+  .section-body { padding: 16px 24px; }
+
+  /* ══════════════════════════════════════
+     SECTION 1 — SUMMARY
+  ══════════════════════════════════════ */
+  .summary-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  /* Findings grid */
+  .findings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .finding-box {
+    border: 1px solid var(--border);
+    padding: 11px 14px;
+    position: relative;
+  }
+
+  .finding-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+  }
+
+  .finding-box.confirmed::before { background: var(--green); }
+  .finding-box.critical::before  { background: var(--red); }
+  .finding-box.cleared::before   { background: var(--green); }
+  .finding-box.pending::before   { background: var(--amber); }
+
+  .fb-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 5px;
+  }
+
+  .fb-label.confirmed { color: var(--green); }
+  .fb-label.critical  { color: var(--red); }
+  .fb-label.cleared   { color: var(--green); }
+  .fb-label.pending   { color: var(--amber); }
+
+  .fb-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }
+
+  .fb-sub {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ══════════════════════════════════════
+     SECTION 2 — ATTACK TIMELINE
+  ══════════════════════════════════════ */
+  .timeline { list-style: none; position: relative; }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 64px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .tl-item {
+    display: flex;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .tl-item:last-child { margin-bottom: 0; }
+
+  .tl-date {
+    width: 64px;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-align: right;
+    padding-right: 16px;
+    padding-top: 2px;
+    line-height: 1.3;
+    position: relative;
+  }
+
+  .tl-date::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--border);
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  .tl-date.critical::after { background: var(--red); border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+  .tl-date.warn::after     { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+  .tl-date.info::after     { background: var(--ir-accent); border-color: var(--ir-accent); box-shadow: 0 0 0 1px var(--ir-accent); }
+  .tl-date.green::after    { background: var(--green); border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+
+  .tl-content {
+    flex: 1;
+    padding-left: 18px;
+  }
+
+  .tl-event {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .tl-detail {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .tl-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .tag-confirmed { background: var(--green-lt); color: var(--green); }
+  .tag-new       { background: var(--ir-accent-lt); color: var(--ir-accent); }
+  .tag-critical  { background: var(--red-lt); color: var(--red); }
+
+  /* ══════════════════════════════════════
+     SECTION 3 — THE 47-DAY CALLOUT
+     This is the centrepiece of the document
+  ══════════════════════════════════════ */
+  .forty-seven-block {
+    background: #0d1b2e;
+    border: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .forty-seven-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--red);
+  }
+
+  .fsb-inner {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  /* The big number */
+  .fsb-number-col {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    min-width: 180px;
+    flex-shrink: 0;
+    background: rgba(192,57,43,0.12);
+  }
+
+  .fsb-number {
+    font-size: 88px;
+    font-weight: 700;
+    color: var(--red);
+    line-height: 1;
+    font-family: var(--mono);
+    letter-spacing: -0.04em;
+  }
+
+  .fsb-unit {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-top: 4px;
+  }
+
+  .fsb-sub-unit {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-top: 2px;
+  }
+
+  /* The text side */
+  .fsb-text-col {
+    flex: 1;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .fsb-headline {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.4;
+  }
+
+  .fsb-headline .red { color: #ff8080; }
+
+  .fsb-body {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+  }
+
+  .fsb-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin: 0;
+  }
+
+  .fsb-implication {
+    background: rgba(192,57,43,0.15);
+    border: 1px solid rgba(192,57,43,0.3);
+    border-left: 3px solid var(--red);
+    padding: 10px 14px;
+    border-radius: 0;
+  }
+
+  .fsb-impl-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ff8080;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+
+  .fsb-impl-text {
+    font-size: 11px;
+    color: #d08080;
+    line-height: 1.5;
+  }
+
+  /* ══════════════════════════════════════
+     SECTION 4 — INSIDER ALLEGATION
+  ══════════════════════════════════════ */
+  .cleared-block {
+    background: var(--green-lt);
+    border: 1px solid #b8dfc8;
+    border-left: 3px solid var(--green);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+
+  .cb-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--green);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cb-text {
+    font-size: 12px;
+    color: #1a3a28;
+    line-height: 1.6;
+  }
+
+  .cb-text strong { color: var(--green); }
+
+  .implication-list { list-style: none; }
+
+  .impl-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef1f5;
+    align-items: flex-start;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .impl-item:last-child { border-bottom: none; }
+
+  .impl-bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ir-accent);
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  /* ══════════════════════════════════════
+     SECTION 5 — VECTOR DETAIL
+  ══════════════════════════════════════ */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .col {
+    padding: 16px 24px;
+  }
+
+  .col:first-child { border-right: 1px solid var(--border); }
+
+  .col-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 12px;
+  }
+
+  .detail-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 8px;
+    font-size: 12px;
+    border-bottom: 1px solid #f0f2f5;
+    padding-bottom: 8px;
+  }
+
+  .detail-row:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+
+  .detail-key {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    width: 120px;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+
+  .detail-val {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .detail-val.critical { color: var(--red); font-weight: 600; }
+  .detail-val.warn     { color: var(--amber); font-weight: 600; }
+
+  /* ══════════════════════════════════════
+     SECTION 6 — OPEN ITEMS
+  ══════════════════════════════════════ */
+  .open-item {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #eef1f5;
+    align-items: flex-start;
+  }
+
+  .open-item:last-child { border-bottom: none; }
+
+  .open-num {
+    background: var(--ir-mid);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--mono);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .open-text {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .open-owner {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    background: #f0f4f8;
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ══════════════════════════════════════
+     SIGNATURE BLOCK
+  ══════════════════════════════════════ */
+  .sig-block {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: #f7f9fc;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .sig-from { flex: 1; }
+
+  .sig-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+
+  .sig-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .sig-title {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .sig-caveat {
+    font-size: 10px;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.5;
+    max-width: 340px;
+    text-align: right;
+  }
+
+  /* ── Footer ── */
+  .doc-footer {
+    background: var(--ir-dark);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+  }
+
+  .footer-mid {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ir-accent);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+  }
+
+  .footer-right {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+  }
+
+  /* ══════════════════════════════════════
+     MOBILE RESPONSIVE
+  ══════════════════════════════════════ */
+  @media (max-width: 600px) {
+    body { padding: 0 0 40px; font-size: 12px; }
+
+    /* Header: stack vendor + client vertically */
+    .header-top { flex-direction: column; }
+    .vendor-block { padding: 14px 16px 10px; }
+    .vendor-name { font-size: 17px; flex-wrap: wrap; gap: 6px; }
+    .client-block {
+      min-width: 0;
+      border-left: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 10px 16px 12px;
+    }
+
+    /* Meta row: 2×2 grid on mobile */
+    .header-meta { grid-template-columns: 1fr 1fr; }
+    .meta-cell { padding: 8px 16px; }
+    .meta-cell:nth-child(2) { border-right: none; }
+
+    /* Title bar: wrap gracefully */
+    .doc-title-bar { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+    .doc-title { font-size: 13px; order: 2; flex: 1 1 100%; }
+    .report-badge { order: 1; }
+    .doc-version { margin-left: 0; order: 3; }
+
+    .exercise-bar { padding: 7px 16px; font-size: 10px; }
+
+    /* Section layout */
+    .section-header { padding: 8px 16px; flex-wrap: wrap; gap: 6px; }
+    .section-status { margin-left: 0; margin-top: 2px; }
+    .section-body { padding: 14px 16px; }
+
+    /* Findings grid: single column */
+    .findings-grid { grid-template-columns: 1fr; }
+
+    /* Timeline: compress date column */
+    .timeline::before { left: 48px; }
+    .tl-date { width: 48px; font-size: 9px; padding-right: 12px; }
+
+    /* 47-day block: stack vertically */
+    .fsb-inner { flex-direction: column; }
+    .fsb-number-col {
+      min-width: 0;
+      border-right: none;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 20px 16px;
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 14px;
+      align-items: baseline;
+    }
+    .fsb-number { font-size: 60px; }
+    .fsb-unit { font-size: 12px; margin-top: 0; }
+    .fsb-sub-unit { display: none; }
+    .fsb-text-col { padding: 16px; }
+    .fsb-headline { font-size: 13px; }
+
+    /* Two-col: stack */
+    .two-col { grid-template-columns: 1fr; }
+    .col { padding: 14px 16px; }
+    .col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .detail-key { width: 100px; font-size: 9px; }
+
+    /* Open items */
+    .open-item { flex-wrap: wrap; }
+    .open-owner { margin-top: 4px; }
+
+    /* Sig block */
+    .sig-block { flex-direction: column; gap: 12px; padding: 14px 16px; }
+    .sig-caveat { max-width: 100%; text-align: left; }
+
+    /* Footer */
+    .doc-footer { flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 16px; }
+    .footer-right { display: none; }
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .doc { box-shadow: none; border: none; max-width: 100%; }
+    .fsb-number { font-size: 72px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ══ HEADER ══ -->
+  <div class="doc-header">
+
+    <div class="header-top">
+      <div class="vendor-block">
+        <div class="vendor-name">
+          Meridian IR
+          <span class="vendor-tag">External · Confidential</span>
+        </div>
+        <div class="vendor-sub">Incident Response &amp; Digital Forensics · Engagement SHS-2026-0519</div>
+      </div>
+      <div class="client-block">
+        <div class="client-label">Prepared for</div>
+        <div class="client-name">Sawatch Health System</div>
+        <div class="client-ref">Attn: Alex Reyes, CISO · Executive Leadership Team</div>
+      </div>
+    </div>
+
+    <div class="header-meta">
+      <div class="meta-cell">
+        <div class="meta-label">Document</div>
+        <div class="meta-value">MIR-PFR-001</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Issued</div>
+        <div class="meta-value prelim">FRI 14:22</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Status</div>
+        <div class="meta-value prelim">PRELIMINARY</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Insider status</div>
+        <div class="meta-value cleared">EMPLOYEE CLEARED</div>
+      </div>
+    </div>
+
+    <div class="doc-title-bar">
+      <div class="report-badge">Preliminary Findings</div>
+      <div class="doc-title">Root Cause &amp; Attack Vector — Initial Confirmation</div>
+      <div class="doc-version">v0.1 · Full report follows</div>
+    </div>
+
+  </div>
+
+  <!-- ── Exercise banner ── -->
+  <div class="exercise-bar">
+    EXERCISE SCENARIO — FICTIONAL — NOT A REAL EVENT · RMISC 2026
+  </div>
+
+  <!-- ══ SECTION 1 — EXECUTIVE SUMMARY ══ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">Executive Summary</div>
+      <div class="section-status status-prelim">Preliminary · Subject to revision</div>
+    </div>
+    <div class="section-body">
+      <p class="summary-text">
+        Meridian IR has completed sufficient forensic analysis to confirm the initial attack vector and resolve the insider access question flagged earlier in this engagement. This preliminary findings report communicates those two conclusions ahead of our full written report, which will follow within 48 hours.
+      </p>
+      <p class="summary-text" style="margin-bottom:16px;">
+        The attack originated from an unpatched vulnerability on an externally-facing VPN appliance. The threat actor exploited this vulnerability approximately three weeks before ransomware was deployed, establishing persistent access and conducting reconnaissance — including credential theft — during that dwell period. The employee flagged by anomalous access logs has been cleared. The access was attributable to the threat actor operating under a compromised credential, not to any action by the employee.
+      </p>
+
+      <div class="findings-grid">
+        <div class="finding-box confirmed">
+          <div class="fb-label confirmed">✓ Confirmed</div>
+          <div class="fb-value">Initial attack vector identified</div>
+          <div class="fb-sub">VPN appliance · unpatched vulnerability · exploited ~3 weeks pre-deployment</div>
+        </div>
+        <div class="finding-box critical">
+          <div class="fb-label critical">⚠ Critical finding</div>
+          <div class="fb-value">Patch was available 47 days prior</div>
+          <div class="fb-sub">Public patch existed before exploitation. See Section 3.</div>
+        </div>
+        <div class="finding-box cleared">
+          <div class="fb-label cleared">✓ Resolved</div>
+          <div class="fb-value">Insider allegation — employee cleared</div>
+          <div class="fb-sub">Access was threat actor using stolen credential. Employee had no involvement.</div>
+        </div>
+        <div class="finding-box pending">
+          <div class="fb-label pending">⧗ Ongoing</div>
+          <div class="fb-value">Full scope &amp; exfiltration volume</div>
+          <div class="fb-sub">Validation continues. Preliminary estimates remain as previously reported.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 2 — ATTACK TIMELINE ══ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">Reconstructed Attack Timeline</div>
+      <div class="section-status status-confirmed">Confirmed</div>
+    </div>
+    <div class="section-body">
+      <ul class="timeline">
+
+        <li class="tl-item">
+          <div class="tl-date warn">~28<br>APR</div>
+          <div class="tl-content">
+            <div class="tl-event">
+              <span class="tl-tag tag-confirmed">Confirmed</span>
+              VPN appliance vulnerability exploited — initial access
+            </div>
+            <div class="tl-detail">
+              Threat actor exploited an unpatched vulnerability on the externally-facing VPN appliance.
+              Initial access established. No alerts triggered. Estimated ~3 weeks before ransomware deployment.
+            </div>
+          </div>
+        </li>
+
+        <li class="tl-item">
+          <div class="tl-date warn">28 APR<br>–16 MAY</div>
+          <div class="tl-content">
+            <div class="tl-event">
+              <span class="tl-tag tag-confirmed">Confirmed</span>
+              Dwell period — reconnaissance and credential theft
+            </div>
+            <div class="tl-detail">
+              Threat actor conducted internal reconnaissance. Active Directory enumeration confirmed.
+              Privileged credentials obtained via credential dumping. Policy documents and operational
+              files accessed from shared file services — including the organisation's cyber insurance policy.
+              No detection during this period.
+            </div>
+          </div>
+        </li>
+
+        <li class="tl-item">
+          <div class="tl-date warn">~5 MAY<br>–16 MAY</div>
+          <div class="tl-content">
+            <div class="tl-event">
+              <span class="tl-tag tag-confirmed">Confirmed</span>
+              Data staging and exfiltration
+            </div>
+            <div class="tl-detail">
+              Large volume of patient and operational records queried and staged for exfiltration using a
+              compromised privileged credential. This access pattern was later flagged as anomalous —
+              attributed at the time to an employee. Attribution is now corrected. See Section 4.
+            </div>
+          </div>
+        </li>
+
+        <li class="tl-item">
+          <div class="tl-date critical">SUN<br>18:00</div>
+          <div class="tl-content">
+            <div class="tl-event">
+              <span class="tl-tag tag-critical">Day 0</span>
+              Ransomware deployed — encryption begins
+            </div>
+            <div class="tl-detail">
+              Ransomware payload delivered across multiple interconnected systems simultaneously.
+              Administrative systems affected first. Clinical systems at Eastern Campus follow overnight.
+              Initial IT assessment: storage array failure.
+            </div>
+          </div>
+        </li>
+
+        <li class="tl-item">
+          <div class="tl-date info">TUE<br>04:30</div>
+          <div class="tl-content">
+            <div class="tl-event">
+              <span class="tl-tag tag-new">Day 2</span>
+              Meridian IR engaged
+            </div>
+            <div class="tl-detail">
+              CISO activates IR retainer. Meridian IR begins forensic analysis. Backup environment
+              confirmed suspect. Do not restore instruction issued.
+            </div>
+          </div>
+        </li>
+
+        <li class="tl-item">
+          <div class="tl-date info">FRI<br>14:22</div>
+          <div class="tl-content">
+            <div class="tl-event">
+              <span class="tl-tag tag-new">Day 4 · Now</span>
+              This report issued
+            </div>
+            <div class="tl-detail">
+              Preliminary attack vector confirmed. Insider allegation resolved. Full written report
+              to follow within 48 hours.
+            </div>
+          </div>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 3 — THE 47-DAY FINDING ══ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">Patch Window — Critical Finding</div>
+      <div class="section-status status-confirmed">Confirmed</div>
+    </div>
+
+    <!-- The centrepiece callout -->
+    <div class="forty-seven-block">
+      <div class="fsb-inner">
+
+        <div class="fsb-number-col">
+          <div class="fsb-number">47</div>
+          <div class="fsb-unit">days</div>
+          <div class="fsb-sub-unit">Patch available before<br>exploitation</div>
+        </div>
+
+        <div class="fsb-text-col">
+          <div class="fsb-headline">
+            A patch for the exploited VPN vulnerability was
+            <span class="red">publicly available for 47 days</span>
+            before the threat actor used it to enter your network.
+          </div>
+
+          <hr class="fsb-divider">
+
+          <div class="fsb-body">
+            The vulnerability was disclosed and patched by the vendor on <strong style="color:rgba(255,255,255,0.8);">11 March 2026</strong>.
+            Sawatch Health System's VPN appliance remained unpatched at the time of exploitation
+            on approximately <strong style="color:rgba(255,255,255,0.8);">28 April 2026</strong> — 47 days later.
+            The patch was not applied before the threat actor identified and exploited the vulnerability.
+          </div>
+
+          <div class="fsb-implication">
+            <div class="fsb-impl-label">Implication for this engagement</div>
+            <div class="fsb-impl-text">
+              This finding will be material to any regulatory inquiry, litigation, and breach notification.
+              Sawatch Health System's patch management process for externally-facing systems will require
+              documented review. The 47-day window should be addressed directly with legal counsel before
+              any external communication referencing root cause.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="section-body" style="padding-top:14px;">
+      <div class="two-col">
+        <div class="col">
+          <div class="col-label">Vulnerability detail</div>
+          <div class="detail-row">
+            <span class="detail-key">System</span>
+            <span class="detail-val">Externally-facing VPN appliance · DMZ</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Vuln type</span>
+            <span class="detail-val">Authentication bypass · remote code execution</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Severity</span>
+            <span class="detail-val critical">Critical (CVSSv3: 9.8)</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Patch released</span>
+            <span class="detail-val">11 March 2026</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Exploited</span>
+            <span class="detail-val critical">~28 April 2026 (+47 days)</span>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col-label">Patch management context</div>
+          <div class="detail-row">
+            <span class="detail-key">Patch SLA</span>
+            <span class="detail-val warn">30 days (internal policy · critical)</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">SLA compliance</span>
+            <span class="detail-val critical">Not met — 17 days beyond SLA</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Scan coverage</span>
+            <span class="detail-val warn">Appliance not in last scan scope</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Owner</span>
+            <span class="detail-val">Under investigation — IT Operations</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Last audit</span>
+            <span class="detail-val warn">No record of recent external audit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 4 — INSIDER ALLEGATION RESOLVED ══ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title">Insider Allegation — Resolution</div>
+      <div class="section-status status-cleared">Employee Cleared</div>
+    </div>
+    <div class="section-body">
+
+      <div class="cleared-block">
+        <div class="cb-label">
+          ✓ Finding confirmed — employee cleared
+        </div>
+        <div class="cb-text">
+          The anomalous access pattern flagged earlier in this engagement — large-volume patient record
+          queries outside normal working hours from a privileged account — has been attributed to the
+          <strong>threat actor operating under a compromised credential</strong>, not to the account holder.
+          The employee had no involvement in the breach. Their credential was stolen during the threat
+          actor's dwell period as part of a broader credential harvesting operation across Active Directory.
+          <br><br>
+          <strong>The employee should be informed of this finding through appropriate HR and legal channels
+          at the earliest opportunity.</strong>
+        </div>
+      </div>
+
+      <div class="col-label" style="margin-bottom:10px;">Implications for the organisation</div>
+      <ul class="implication-list">
+        <li class="impl-item">
+          <div class="impl-bullet"></div>
+          <span>Any suspension, investigation, or HR action taken against the employee based solely on
+          the access log indicators should be reviewed with legal counsel immediately. The employee
+          has not been found to have acted improperly.</span>
+        </li>
+        <li class="impl-item">
+          <div class="impl-bullet"></div>
+          <span>The organisation has an obligation to notify the employee clearly and promptly that
+          they have been cleared. Delay in doing so creates additional legal and reputational exposure.</span>
+        </li>
+        <li class="impl-item">
+          <div class="impl-bullet"></div>
+          <span>The credential compromise that enabled this access pattern suggests that other
+          privileged credentials obtained during the dwell period may still be active or in use.
+          Credential hygiene across the environment should be treated as an ongoing containment
+          priority, not a completed action.</span>
+        </li>
+        <li class="impl-item">
+          <div class="impl-bullet"></div>
+          <span>This finding does not resolve the question of whether a separate insider threat
+          exists. It resolves this specific allegation only. Meridian IR's full report will address
+          the broader insider risk posture separately.</span>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+
+  <!-- ══ SECTION 5 — OPEN ITEMS ══ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">Remaining Open Items</div>
+      <div class="section-status status-prelim">In Progress</div>
+    </div>
+    <div class="section-body">
+      <ul style="list-style:none;">
+        <li class="open-item">
+          <div class="open-num">1</div>
+          <div class="open-text">Full exfiltration volume validation — sample of 500 confirmed; total 2.3M estimate under forensic verification</div>
+          <div class="open-owner">Meridian IR · 48hrs</div>
+        </li>
+        <li class="open-item">
+          <div class="open-num">2</div>
+          <div class="open-text">Backup environment integrity — forensic imaging complete; clean restore point identification ongoing</div>
+          <div class="open-owner">Meridian IR · 24hrs</div>
+        </li>
+        <li class="open-item">
+          <div class="open-num">3</div>
+          <div class="open-text">Active Directory — full credential inventory and identification of all compromised accounts during dwell period</div>
+          <div class="open-owner">Meridian IR + IT</div>
+        </li>
+        <li class="open-item">
+          <div class="open-num">4</div>
+          <div class="open-text">Patch management process review — documentation of SLA, ownership, and scan scope for externally-facing systems</div>
+          <div class="open-owner">IT Operations</div>
+        </li>
+        <li class="open-item">
+          <div class="open-num">5</div>
+          <div class="open-text">Notification obligations — HIPAA 60-day window status and state law requirements require immediate legal review given confirmed breach date</div>
+          <div class="open-owner">Legal · Urgent</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Signature block ── -->
+  <div class="sig-block">
+    <div class="sig-from">
+      <div class="sig-label">Prepared by</div>
+      <div class="sig-name">Meridian IR — Engagement Lead</div>
+      <div class="sig-title">Incident Response &amp; Digital Forensics · Engagement SHS-2026-0519</div>
+    </div>
+    <div class="sig-caveat">
+      This is a preliminary findings report issued ahead of the full written report.
+      Findings are subject to revision as analysis continues. Do not share externally
+      without legal review.
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="doc-footer">
+    <div class="footer-left">MIR-PFR-001 · Sawatch Health System · Issued Friday 14:22</div>
+    <div class="footer-mid">MERIDIAN IR · CONFIDENTIAL</div>
+    <div class="footer-right">v0.1 Preliminary · Do not distribute</div>
+  </div>
+
+</div>
+
+</body>
+</html>
